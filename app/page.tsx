@@ -1,65 +1,289 @@
-import Image from "next/image";
+'use client';
+
+import React, { useState, useEffect, useRef } from 'react';
+import {
+    UploadCloud,
+    FileText,
+    Clock,
+    CheckCircle,
+    XCircle,
+    Download,
+    Loader2,
+    Inbox
+} from 'lucide-react';
+
+const API_URL = 'http://127.0.0.1:8000';
+
+type ReportStatusType = 'pendente' | 'processando' | 'concluido' | 'falhou';
+
+interface Report {
+    id: number;
+    original_filename: string | null;
+    status: ReportStatusType;
+    error_message: string | null;
+    created_at: string;
+}
+
+interface ReportStatusProps {
+    status: ReportStatusType;
+    error: string | null;
+}
+
 
 export default function Home() {
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    const [reports, setReports] = useState<Report[]>([]);
+    const [file, setFile] = useState<File | null>(null);
+    const [isLoading, setIsLoading] = useState<boolean>(false);
+    const [error, setError] = useState<string | null>(null);
+    const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+    const fetchReports = async (): Promise<void> => {
+        try {
+            const response = await fetch(`${API_URL}/api/reports`);
+            if (!response.ok) {
+                throw new Error('Falha ao buscar relatórios');
+            }
+
+            const data: Report[] = await response.json();
+
+            const sortedData = data.sort((a, b) =>
+                new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+            );
+            setReports(sortedData);
+
+        } catch (err: any) {
+            console.error(err);
+            setError(err.message || 'Não foi possível carregar os relatórios.');
+        }
+    };
+
+    useEffect(() => {
+        fetchReports();
+
+        const intervalId = setInterval(() => {
+            fetchReports();
+        }, 5000); // Busca a cada 5 segundos
+
+        return () => clearInterval(intervalId);
+    }, []);
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            setFile(e.target.files[0]);
+            setError(null);
+        }
+    };
+
+    const handleUpload = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        if (!file) {
+            setError('Por favor, selecione um arquivo CSV.');
+            return;
+        }
+
+        setIsLoading(true);
+        setError(null);
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const response = await fetch(`${API_URL}/api/reports`, {
+                method: 'POST',
+                body: formData,
+            });
+
+            if (!response.ok) {
+                const errData = await response.json();
+                throw new Error(errData.message || 'Falha no upload');
+            }
+
+            setFile(null);
+            if (fileInputRef.current) {
+                fileInputRef.current.value = ''; // Limpa o input de arquivo
+            }
+            await fetchReports(); // Atualiza a lista imediatamente
+
+        } catch (err: any) { // Captura o erro
+            setError(err.message || 'Erro desconhecido no upload');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    return (
+        <div className="min-h-screen bg-gray-50 text-gray-900 p-4 sm:p-8">
+            <div className="max-w-6xl mx-auto">
+
+                <header className="mb-8">
+                    <h1 className="text-3xl font-bold text-gray-800">Gerador de Relatórios</h1>
+                    <p className="text-gray-600 mt-1">Faça upload de um arquivo .csv para processar.</p>
+                </header>
+
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+                    {/* --- Coluna de Upload --- */}
+                    <div className="lg:col-span-1">
+                        <form onSubmit={handleUpload} className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+                            <h2 className="text-xl font-semibold mb-4 flex items-center">
+                                <UploadCloud className="w-5 h-5 mr-2 text-blue-600" />
+                                Novo Relatório
+                            </h2>
+
+                            <label
+                                htmlFor="file-upload"
+                                className="relative flex flex-col items-center justify-center w-full h-48 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors"
+                            >
+                                {file ? (
+                                    <div className="text-center">
+                                        <FileText className="w-12 h-12 text-blue-600 mx-auto" />
+                                        <p className="mt-2 font-semibold text-gray-700">{file.name}</p>
+                                        <p className="text-xs text-gray-500">{Math.round(file.size / 1024)} KB</p>
+                                    </div>
+                                ) : (
+                                    <div className="text-center text-gray-500">
+                                        <UploadCloud className="w-12 h-12 mx-auto" />
+                                        <p className="mt-2 font-semibold">Clique para enviar</p>
+                                        <p className="text-xs">ou arraste e solte (CSV)</p>
+                                    </div>
+                                )}
+                                <input
+                                    id="file-upload"
+                                    ref={fileInputRef}
+                                    name="csv_file"
+                                    type="file"
+                                    className="sr-only"
+                                    accept=".csv"
+                                    onChange={handleFileChange}
+                                />
+                            </label>
+
+                            <button
+                                type="submit"
+                                disabled={isLoading || !file}
+                                className="mt-6 w-full flex items-center justify-center bg-blue-600 text-white font-semibold py-3 px-4 rounded-lg shadow-md hover:bg-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {isLoading ? (
+                                    <>
+                                        <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                                        Processando...
+                                    </>
+                                ) : (
+                                    'Gerar Relatório'
+                                )}
+                            </button>
+
+                            {error && (
+                                <div className="mt-4 text-center text-sm text-red-600 bg-red-50 p-3 rounded-lg border border-red-200">
+                                    {error}
+                                </div>
+                            )}
+                        </form>
+                    </div>
+
+                    {/* --- Coluna da Lista de Relatórios --- */}
+                    <div className="lg:col-span-2">
+                        <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+                            <h2 className="text-xl font-semibold mb-4 flex items-center">
+                                <FileText className="w-5 h-5 mr-2 text-gray-700" />
+                                Histórico de Relatórios
+                            </h2>
+
+                            <div className="overflow-x-auto">
+                                <table className="min-w-full divide-y divide-gray-200">
+                                    <thead className="bg-gray-50">
+                                    <tr>
+                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Arquivo</th>
+                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data</th>
+                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody className="bg-white divide-y divide-gray-200">
+                                    {reports.length === 0 && (
+                                        <tr>
+                                            <td colSpan={4} className="px-6 py-12 text-center">
+                                                <Inbox className="w-12 h-12 text-gray-400 mx-auto" />
+                                                <p className="text-gray-500 mt-2">Nenhum relatório encontrado.</p>
+                                            </td>
+                                        </tr>
+                                    )}
+
+                                    {reports.map((report) => (
+                                        <tr key={report.id}>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800">
+                                                {report.original_filename || 'report.csv'}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <ReportStatus status={report.status} error={report.error_message} />
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                {new Date(report.created_at).toLocaleString('pt-BR')}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                                {report.status === 'concluido' && (
+                                                    <a
+                                                        // Assumindo que sua API tem uma rota de download
+                                                        href={`${API_URL}/api/reports/${report.id}/download`}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="text-blue-600 hover:text-blue-800 flex items-center"
+                                                    >
+                                                        <Download className="w-4 h-4 mr-1" />
+                                                        Baixar
+                                                    </a>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
-  );
+    );
+}
+
+/**
+ * Componente auxiliar para renderizar o "badge" de status.
+ */
+function ReportStatus({ status, error }: ReportStatusProps) {
+    if (status === 'concluido') {
+        return (
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+        <CheckCircle className="w-3 h-3 mr-1.5" />
+        Concluído
+      </span>
+        );
+    }
+
+    if (status === 'falhou') {
+        return (
+            <span title={error || 'Erro desconhecido'} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 cursor-help">
+        <XCircle className="w-3 h-3 mr-1.5" />
+        Falhou
+      </span>
+        );
+    }
+
+    if (status === 'processando') {
+        return (
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+        <Loader2 className="w-3 h-3 mr-1.5 animate-spin" />
+        Processando
+      </span>
+        );
+    }
+
+    // Padrão (status 'pendente')
+    return (
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+      <Clock className="w-3 h-3 mr-1.5" />
+      Pendente
+    </span>
+    );
 }
