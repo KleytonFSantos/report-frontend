@@ -40,6 +40,7 @@ export default function Home() {
     const fetchReports = async (): Promise<void> => {
         // @ts-ignore
         // @ts-ignore
+        // @ts-ignore
         try {
             const response = await fetch(`${API_URL}/api/reports`);
             if (!response.ok) {
