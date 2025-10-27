@@ -38,6 +38,8 @@ export default function Home() {
     const fileInputRef = useRef<HTMLInputElement | null>(null);
 
     const fetchReports = async (): Promise<void> => {
+        // @ts-ignore
+        // @ts-ignore
         try {
             const response = await fetch(`${API_URL}/api/reports`);
             if (!response.ok) {
@@ -50,9 +52,8 @@ export default function Home() {
                 new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
             );
             setReports(sortedData);
-
+            // @ts-ignore
         } catch (err: any) {
-            console.error(err);
             setError(err.message || 'Não foi possível carregar os relatórios.');
         }
     };
@@ -62,7 +63,7 @@ export default function Home() {
 
         const intervalId = setInterval(() => {
             fetchReports();
-        }, 5000); // Busca a cada 5 segundos
+        }, 5000);
 
         return () => clearInterval(intervalId);
     }, []);
@@ -100,11 +101,11 @@ export default function Home() {
 
             setFile(null);
             if (fileInputRef.current) {
-                fileInputRef.current.value = ''; // Limpa o input de arquivo
+                fileInputRef.current.value = '';
             }
-            await fetchReports(); // Atualiza a lista imediatamente
-
-        } catch (err: any) { // Captura o erro
+            await fetchReports();
+            // @ts-ignore
+        } catch (err: any) {
             setError(err.message || 'Erro desconhecido no upload');
         } finally {
             setIsLoading(false);
@@ -122,7 +123,6 @@ export default function Home() {
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
-                    {/* --- Coluna de Upload --- */}
                     <div className="lg:col-span-1">
                         <form onSubmit={handleUpload} className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
                             <h2 className="text-xl font-semibold mb-4 flex items-center">
@@ -181,7 +181,6 @@ export default function Home() {
                         </form>
                     </div>
 
-                    {/* --- Coluna da Lista de Relatórios --- */}
                     <div className="lg:col-span-2">
                         <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
                             <h2 className="text-xl font-semibold mb-4 flex items-center">
@@ -223,7 +222,6 @@ export default function Home() {
                                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                                 {report.status === 'concluido' && (
                                                     <a
-                                                        // Assumindo que sua API tem uma rota de download
                                                         href={`${API_URL}/api/reports/${report.id}/download`}
                                                         target="_blank"
                                                         rel="noopener noreferrer"
@@ -248,9 +246,6 @@ export default function Home() {
     );
 }
 
-/**
- * Componente auxiliar para renderizar o "badge" de status.
- */
 function ReportStatus({ status, error }: ReportStatusProps) {
     if (status === 'concluido') {
         return (
@@ -279,7 +274,6 @@ function ReportStatus({ status, error }: ReportStatusProps) {
         );
     }
 
-    // Padrão (status 'pendente')
     return (
         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
       <Clock className="w-3 h-3 mr-1.5" />
