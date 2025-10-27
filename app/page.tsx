@@ -52,7 +52,7 @@ export default function Home() {
                 new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
             );
             setReports(sortedData);
-            // @ts-ignore
+            // @ts-expect-error
         } catch (err: any) {
             setError(err.message || 'Não foi possível carregar os relatórios.');
         }
@@ -104,7 +104,7 @@ export default function Home() {
                 fileInputRef.current.value = '';
             }
             await fetchReports();
-            // @ts-ignore
+            // ts-expect-error
         } catch (err: any) {
             setError(err.message || 'Erro desconhecido no upload');
         } finally {
