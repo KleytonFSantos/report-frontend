@@ -52,21 +52,35 @@ jobs:
       - name: 3. Executar Script de Deploy na EC2
         run: |
           ssh -T -o StrictHostKeyChecking=no ${{ secrets.AWS_USER }}@${{ secrets.AWS_HOST }} << 'EOF'
+            # --- Gerenciamento de Versão do Node ---
+            # Carrega o NVM (Node Version Manager)
+            # (Necessário porque o SSH não carrega o .bashrc por padrão)
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+          
             # Navega para a pasta do frontend (ALTERE SE NECESSÁRIO)
             cd /var/www/report-frontend
 
             # Baixa as últimas mudanças
             git pull origin main
+          
+            # Ativa a versão correta do Node
+            echo "Garantindo Node.js versão 20..."
+            nvm use 20
 
             # Instala dependências de produção
+            echo "Instalando dependências..."
             npm ci
 
             # Gera o build de produção
+            echo "Gerando build..."
             npm run build
           
             # Reinicia o servidor (Exemplo usando PM2)
             # Se você não usa PM2, troque este comando pelo seu
+            echo "Reiniciando aplicação..."
             pm2 restart report-frontend 
 
             echo "🚀 Deploy do Frontend concluído!"
           EOF
+
