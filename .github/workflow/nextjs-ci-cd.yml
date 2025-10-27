@@ -1,0 +1,72 @@
+name: CI/CD do Frontend Next.js
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  # Job 1: Build e Lint
+  build-and-lint:
+    runs-on: ubuntu-latest
+    name: Testar Build e Lint
+
+    steps:
+      - name: 1. Obter código do repositório
+        uses: actions/checkout@v4
+
+      - name: 2. Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20 # Use a versão do Node que seu projeto usa
+
+      - name: 3. Instalar dependências (npm)
+        run: npm ci # 'ci' é mais rápido e seguro para pipelines
+
+      - name: 4. Executar Análise Estática (Lint)
+        run: npm run lint
+
+      - name: 5. Executar Build de Produção
+        run: npm run build
+
+  # Job 2: Deploy (apenas na branch 'main')
+  deploy:
+    runs-on: ubuntu-latest
+    name: Deploy no Servidor EC2
+    needs: build-and-lint  # Só executa se o job 'build-and-lint' passar
+    if: github.ref == 'refs/heads/main' # Só executa em push para a 'main'
+
+    steps:
+      - name: 1. Obter código do repositório
+        uses: actions/checkout@v4
+
+      - name: 2. Configurar Chave SSH
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: ${{ secrets.AWS_PRIVATE_KEY }}
+          name: id_rsa
+          known_hosts: |
+            ${{ secrets.AWS_HOST }}
+
+      - name: 3. Executar Script de Deploy na EC2
+        run: |
+          ssh -T -o StrictHostKeyChecking=no ${{ secrets.AWS_USER }}@${{ secrets.AWS_HOST }} << 'EOF'
+            # Navega para a pasta do frontend (ALTERE SE NECESSÁRIO)
+            cd /var/www/report-frontend
+
+            # Baixa as últimas mudanças
+            git pull origin main
+
+            # Instala dependências de produção
+            npm ci
+
+            # Gera o build de produção
+            npm run build
+          
+            # Reinicia o servidor (Exemplo usando PM2)
+            # Se você não usa PM2, troque este comando pelo seu
+            pm2 restart report-frontend 
+
+            echo "🚀 Deploy do Frontend concluído!"
+          EOF
