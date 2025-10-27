@@ -67,6 +67,10 @@ jobs:
             echo "Garantindo Node.js versão 20..."
             nvm use 20
 
+            # Garante que o PM2 está instalado para esta versão do Node
+            echo "Garantindo que o PM2 está instalado..."
+            npm install -g pm2
+
             # Instala dependências de produção
             echo "Instalando dependências..."
             npm ci
