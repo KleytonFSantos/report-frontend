@@ -38,9 +38,6 @@ export default function Home() {
     const fileInputRef = useRef<HTMLInputElement | null>(null);
 
     const fetchReports = async (): Promise<void> => {
-        // @ts-ignore
-        // @ts-ignore
-        // @ts-ignore
         try {
             const response = await fetch(`${API_URL}/api/reports`);
             if (!response.ok) {
@@ -53,9 +50,13 @@ export default function Home() {
                 new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
             );
             setReports(sortedData);
-            // @ts-expect-error
-        } catch (err: any) {
-            setError(err.message || 'Não foi possível carregar os relatórios.');
+
+        } catch (err: unknown) {
+            if (err instanceof Error) {
+                setError(err.message);
+            } else {
+                setError('Não foi possível carregar os relatórios.');
+            }
         }
     };
 
@@ -105,9 +106,12 @@ export default function Home() {
                 fileInputRef.current.value = '';
             }
             await fetchReports();
-            // ts-expect-error
-        } catch (err: any) {
-            setError(err.message || 'Erro desconhecido no upload');
+        } catch (err: unknown) {
+            if (err instanceof Error) {
+                setError(err.message);
+            } else {
+                setError('Erro desconhecido no upload');
+            }
         } finally {
             setIsLoading(false);
         }
