@@ -79,7 +79,7 @@ jobs:
             # Reinicia o servidor (Exemplo usando PM2)
             # Se você não usa PM2, troque este comando pelo seu
             echo "Reiniciando aplicação..."
-            pm2 restart report-frontend 
+            npm run start
 
             echo "🚀 Deploy do Frontend concluído!"
           EOF
