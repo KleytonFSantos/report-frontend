@@ -54,7 +54,6 @@ jobs:
           ssh -T -o StrictHostKeyChecking=no ${{ secrets.AWS_USER }}@${{ secrets.AWS_HOST }} << 'EOF'
             # --- Gerenciamento de Versão do Node ---
             # Carrega o NVM (Node Version Manager)
-            # (Necessário porque o SSH não carrega o .bashrc por padrão)
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
           
@@ -76,10 +75,12 @@ jobs:
             echo "Gerando build..."
             npm run build
           
-            # Reinicia o servidor (Exemplo usando PM2)
-            # Se você não usa PM2, troque este comando pelo seu
-            echo "Reiniciando aplicação..."
-            npm run start
+            # Reinicia a aplicação com PM2 (em background)
+            echo "Reiniciando aplicação com PM2..."
+          
+            # Tenta reiniciar o app. Se falhar (||), inicia o app.
+            # O '-- start' no comando de start é para o 'npm run start'
+            pm2 restart report-frontend || pm2 start npm --name "report-frontend" -- start
 
             echo "🚀 Deploy do Frontend concluído!"
           EOF
