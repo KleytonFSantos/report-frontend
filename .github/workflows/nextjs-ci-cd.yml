@@ -63,6 +63,9 @@ jobs:
             # Baixa as últimas mudanças
             git pull origin main
           
+            echo "Garantindo permissões da pasta (sudo chown)..."
+            sudo chown -R ${{ secrets.AWS_USER }}:${{ secrets.AWS_USER }} .
+          
             # Ativa a versão correta do Node
             echo "Garantindo Node.js versão 20..."
             nvm use 20
