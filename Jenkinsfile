@@ -28,7 +28,6 @@ pipeline {
                     #!/bin/bash
                     echo "A carregar NVM..."
                     export NVM_DIR="${env.NVM_DIR}"
-
                     [ -s "\$NVM_DIR/nvm.sh" ] && . "\$NVM_DIR/nvm.sh"
 
                     echo "A usar Node 20..."
@@ -57,22 +56,23 @@ pipeline {
                             #!/bin/bash
                             echo "A carregar NVM..."
                             export NVM_DIR="${env.NVM_DIR}"
-
                             [ -s "\$NVM_DIR/nvm.sh" ] && . "\$NVM_DIR/nvm.sh"
 
                             echo "A usar Node 20..."
                             nvm use 20
 
                             echo "A instalar dependências de produção (npm ci)..."
+                            # O 'npm ci' irá instalar o pm2 se ele estiver no package.json
                             npm ci
 
                             echo "A gerar build de produção..."
                             npm run build
 
                             echo "A reiniciar a aplicação com PM2..."
-                            npm install -g pm2
 
-                            pm2 reload report-frontend 2>/null || pm2 start "npm run start" --name "report-frontend"
+                            npm install pm2
+
+                            npx pm2 reload report-frontend 2>/dev/null || npx pm2 start "npm run start" --name "report-frontend"
                         """
 
                         echo "🚀 Deploy do Frontend concluído!"
