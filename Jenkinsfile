@@ -24,7 +24,7 @@ pipeline {
         // --- Fase 2: Testes, Lint e Build (CI) ---
         stage('Test, Lint & Build (CI)') {
             steps {
-                sh '''
+                sh """
                     #!/bin/bash
                     echo "A carregar NVM..."
                     export NVM_DIR="${env.NVM_DIR}"
@@ -42,7 +42,7 @@ pipeline {
 
                     echo "A executar Build (para teste)..."
                     npm run build
-                '''
+                """
             }
         }
 
@@ -53,7 +53,7 @@ pipeline {
                     script {
                         echo "A iniciar o deploy no diretório: ${PROJECT_DIR}"
 
-                        sh '''
+                        sh """
                             #!/bin/bash
                             echo "A carregar NVM..."
                             export NVM_DIR="${env.NVM_DIR}"
@@ -73,7 +73,7 @@ pipeline {
                             npm install -g pm2
 
                             pm2 reload report-frontend 2>/null || pm2 start "npm run start" --name "report-frontend"
-                        '''
+                        """
 
                         echo "🚀 Deploy do Frontend concluído!"
                     }
