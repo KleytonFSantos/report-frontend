@@ -39,7 +39,7 @@ export default function Home() {
 
     const fetchReports = async (): Promise<void> => {
         try {
-            const response = await fetch(`${API_URL}/api/reports`);
+            const response = await fetch(`${API_URL}/reports`);
             if (!response.ok) {
                 throw new Error('Falha ao buscar relatórios');
             }
