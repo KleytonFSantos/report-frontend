@@ -28,7 +28,8 @@ pipeline {
                     #!/bin/bash
                     echo "A carregar NVM..."
                     export NVM_DIR="${env.NVM_DIR}"
-                    [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+
+                    [ -s "\$NVM_DIR/nvm.sh" ] && . "\$NVM_DIR/nvm.sh"
 
                     echo "A usar Node 20..."
                     nvm use 20
@@ -56,7 +57,8 @@ pipeline {
                             #!/bin/bash
                             echo "A carregar NVM..."
                             export NVM_DIR="${env.NVM_DIR}"
-                            [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+
+                            [ -s "\$NVM_DIR/nvm.sh" ] && . "\$NVM_DIR/nvm.sh"
 
                             echo "A usar Node 20..."
                             nvm use 20
@@ -70,7 +72,7 @@ pipeline {
                             echo "A reiniciar a aplicação com PM2..."
                             npm install -g pm2
 
-                            pm2 reload report-frontend 2>/dev/null || pm2 start "npm run start" --name "report-frontend"
+                            pm2 reload report-frontend 2>/null || pm2 start "npm run start" --name "report-frontend"
                         '''
 
                         echo "🚀 Deploy do Frontend concluído!"
