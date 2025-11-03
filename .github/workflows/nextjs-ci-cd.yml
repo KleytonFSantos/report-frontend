@@ -53,19 +53,20 @@ jobs:
         run: |
           ssh -T -o StrictHostKeyChecking=no ${{ secrets.AWS_USER }}@${{ secrets.AWS_HOST }} << 'EOF'
             # --- Gerenciamento de Versão do Node ---
-            # Carrega o NVM (Node Version Manager)
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-          
-            # Navega para a pasta do frontend (ALTERE SE NECESSÁRIO)
+
+            # Navega para a pasta do frontend
             cd /var/www/report-frontend
 
             # Baixa as últimas mudanças
             git pull origin main
-          
+
+            # Garante permissões da pasta
             echo "Garantindo permissões da pasta (sudo chown)..."
-            sudo chown -R ${{ secrets.AWS_USER }}:${{ secrets.AWS_USER }} .
-          
+            # Garante que o usuário atual (ubuntu) seja o dono
+            sudo chown -R $USER:$USER . 
+
             # Ativa a versão correta do Node
             echo "Garantindo Node.js versão 20..."
             nvm use 20
@@ -81,13 +82,11 @@ jobs:
             # Gera o build de produção
             echo "Gerando build..."
             npm run build
-          
+
             # Reinicia a aplicação com PM2 (em background)
             echo "Reiniciando aplicação com PM2..."
-          
-            # Tenta reiniciar o app. Se falhar (||), inicia o app.
-            # O '-- start' no comando de start é para o 'npm run start'
-            pm2 restart report-frontend || pm2 start npm --name "report-frontend" -- start
+
+            pm2 reload report-frontend || pm2 start npm --name "report-frontend" -- start
 
             echo "🚀 Deploy do Frontend concluído!"
           EOF
