@@ -1,6 +1,6 @@
 import { Report } from '@/types/reports';
 
-const API_URL = (process.env.API_URL || '') + '/api';
+const API_URL = (process.env.NEXT_PUBLIC_API_URL || '') + '/api';
 
 export async function getReports(): Promise<Report[]> {
     const response = await fetch(`${API_URL}/reports`);

@@ -4,7 +4,7 @@ import React from 'react';
 import { FileText, Download, Inbox } from 'lucide-react';
 import { ReportStatus, ReportStatusType } from '@/components/report/ReportStatus';
 
-const API_URL = process.env.API_URL + '/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL + '/api';
 
 interface Report {
     id: number;
@@ -61,7 +61,7 @@ export function ReportHistoryTable({ reports }: ReportHistoryTableProps) {
                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                     {report.status === 'concluido' && (
                                         <a
-                                            href={`${API_URL}/api/reports/${report.id}/download`}
+                                            href={`${API_URL}/reports/${report.id}/download`}
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             className="text-blue-600 hover:text-blue-800 flex items-center"
